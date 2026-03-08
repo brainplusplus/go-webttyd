@@ -1,0 +1,127 @@
+import { act } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { TerminalView } from './TerminalView';
+import type { SessionTab } from '../types';
+
+Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+
+const createSessionWebSocket = vi.fn();
+const terminalDispose = vi.fn();
+const terminalOpen = vi.fn();
+const terminalWrite = vi.fn();
+const terminalLoadAddon = vi.fn();
+const terminalOnDataDispose = vi.fn();
+const fitAddonFit = vi.fn();
+
+vi.mock('../api', () => ({
+  createSessionWebSocket: (sessionId: string) => createSessionWebSocket(sessionId),
+}));
+
+vi.mock('@xterm/xterm/css/xterm.css', () => ({}));
+
+vi.mock('@xterm/xterm', () => ({
+  Terminal: class {
+    cols = 80;
+    rows = 24;
+
+    loadAddon(addon: unknown) {
+      terminalLoadAddon(addon);
+    }
+
+    open(element: Element) {
+      terminalOpen(element);
+    }
+
+    write(data: string) {
+      terminalWrite(data);
+    }
+
+    onData() {
+      return {
+        dispose: terminalOnDataDispose,
+      };
+    }
+
+    dispose() {
+      terminalDispose();
+    }
+  },
+}));
+
+vi.mock('@xterm/addon-fit', () => ({
+  FitAddon: class {
+    fit() {
+      fitAddonFit();
+    }
+  },
+}));
+
+class FakeWebSocket {
+  static readonly CONNECTING = 0;
+  static readonly OPEN = 1;
+  static readonly CLOSED = 3;
+
+  readyState = FakeWebSocket.OPEN;
+  close = vi.fn(() => {
+    this.readyState = FakeWebSocket.CLOSED;
+  });
+  send = vi.fn();
+
+  addEventListener() {
+    return undefined;
+  }
+}
+
+describe('TerminalView', () => {
+  let container: HTMLDivElement;
+  let root: Root;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+    createSessionWebSocket.mockReset();
+    terminalDispose.mockReset();
+    terminalOpen.mockReset();
+    terminalWrite.mockReset();
+    terminalLoadAddon.mockReset();
+    terminalOnDataDispose.mockReset();
+    fitAddonFit.mockReset();
+  });
+
+  afterEach(() => {
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('does not recreate the websocket when only the status callback identity changes', () => {
+    createSessionWebSocket.mockReturnValue(new FakeWebSocket());
+
+    const tab: SessionTab = {
+      id: 'session-1',
+      profile: {
+        id: 'pwsh',
+        label: 'PowerShell 7',
+        command: 'pwsh.exe',
+        args: [],
+      },
+      status: 'connecting',
+    };
+
+    act(() => {
+      root.render(<TerminalView tab={tab} active onStatusChange={() => undefined} />);
+    });
+
+    expect(createSessionWebSocket).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      root.render(<TerminalView tab={tab} active onStatusChange={() => undefined} />);
+    });
+
+    expect(createSessionWebSocket).toHaveBeenCalledTimes(1);
+  });
+});

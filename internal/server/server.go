@@ -1,0 +1,78 @@
+package server
+
+import (
+	"fmt"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"go-webttyd/internal/auth"
+	"go-webttyd/internal/config"
+	"go-webttyd/internal/httpapi"
+	"go-webttyd/internal/shells"
+	"go-webttyd/internal/terminal"
+)
+
+type Server struct {
+	Config config.Config
+	api    *httpapi.API
+}
+
+func New(cfg config.Config) *Server {
+	profiles := shells.Discover()
+	manager := terminal.NewManager(terminal.NewPTYSpawnFunc())
+	api := httpapi.New(httpapi.Dependencies{
+		Shells:   profiles,
+		Sessions: manager,
+	})
+
+	return &Server{
+		Config: cfg,
+		api:    api,
+	}
+}
+
+func (s *Server) Handler() http.Handler {
+	mux := http.NewServeMux()
+	mux.Handle("/api/", s.api.Handler())
+	mux.Handle("/ws/", s.api.Handler())
+	mux.Handle("/", spaHandler(distDir()))
+
+	return auth.Middleware(s.Config.BasicAuthUsername, s.Config.BasicAuthPassword)(mux)
+}
+
+func (s *Server) Addr() string {
+	return ":" + s.Config.Port
+}
+
+func (s *Server) ListenAndServe() error {
+	return http.ListenAndServe(s.Addr(), s.Handler())
+}
+
+func distDir() string {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return "dist"
+	}
+	return filepath.Join(cwd, "dist")
+}
+
+func spaHandler(root string) http.Handler {
+	fileServer := http.FileServer(http.Dir(root))
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, err := os.Stat(root); err != nil {
+			http.Error(w, fmt.Sprintf("frontend assets not found in %s; run npm run build", root), http.StatusServiceUnavailable)
+			return
+		}
+
+		relativePath := strings.TrimPrefix(filepath.Clean(r.URL.Path), string(filepath.Separator))
+		requested := filepath.Join(root, relativePath)
+		if info, err := os.Stat(requested); err == nil && !info.IsDir() {
+			fileServer.ServeHTTP(w, r)
+			return
+		}
+
+		http.ServeFile(w, r, filepath.Join(root, "index.html"))
+	})
+}
