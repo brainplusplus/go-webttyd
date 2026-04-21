@@ -4,6 +4,7 @@ import "go-webttyd/internal/terminal"
 
 type createSessionRequest struct {
 	ShellID string `json:"shellId"`
+	CWD     string `json:"cwd,omitempty"`
 }
 
 type createSessionResponse struct {
@@ -21,4 +22,28 @@ type wsInboundMessage struct {
 type wsOutboundMessage struct {
 	Type string `json:"type"`
 	Data string `json:"data,omitempty"`
+}
+
+type writeFileRequest struct {
+	Content string `json:"content"`
+}
+
+type createEntryRequest struct {
+	Path string `json:"path"`
+	Type string `json:"type"`
+}
+
+type renameRequest struct {
+	OldPath string `json:"oldPath"`
+	NewPath string `json:"newPath"`
+}
+
+type copyMoveRequest struct {
+	SourcePath string `json:"sourcePath"`
+	DestPath   string `json:"destPath"`
+}
+
+type configResponse struct {
+	Mode          string `json:"mode"`
+	WorkspaceRoot string `json:"workspaceRoot"`
 }

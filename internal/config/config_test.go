@@ -30,6 +30,60 @@ func TestLoadFromEnvRejectsMissingCredentials(t *testing.T) {
 	}
 }
 
+func TestLoadFromEnvDefaultsToSimpleMode(t *testing.T) {
+	t.Setenv("PORT", "8080")
+	t.Setenv("BASIC_AUTH_USERNAME", "alice")
+	t.Setenv("BASIC_AUTH_PASSWORD", "secret")
+	t.Setenv("MODE", "")
+	t.Setenv("WORKSPACE_ROOT", "")
+
+	cfg, err := LoadFromEnv()
+	if err != nil {
+		t.Fatalf("LoadFromEnv returned error: %v", err)
+	}
+
+	if cfg.Mode != "simple" {
+		t.Fatalf("expected default mode 'simple', got %q", cfg.Mode)
+	}
+
+	if cfg.WorkspaceRoot != "" {
+		t.Fatalf("expected empty workspace root, got %q", cfg.WorkspaceRoot)
+	}
+}
+
+func TestLoadFromEnvReadsFullMode(t *testing.T) {
+	t.Setenv("PORT", "8080")
+	t.Setenv("BASIC_AUTH_USERNAME", "alice")
+	t.Setenv("BASIC_AUTH_PASSWORD", "secret")
+	t.Setenv("MODE", "full")
+	t.Setenv("WORKSPACE_ROOT", "/home/user/projects")
+
+	cfg, err := LoadFromEnv()
+	if err != nil {
+		t.Fatalf("LoadFromEnv returned error: %v", err)
+	}
+
+	if cfg.Mode != "full" {
+		t.Fatalf("expected mode 'full', got %q", cfg.Mode)
+	}
+
+	if cfg.WorkspaceRoot != "/home/user/projects" {
+		t.Fatalf("expected workspace root '/home/user/projects', got %q", cfg.WorkspaceRoot)
+	}
+}
+
+func TestLoadFromEnvRejectsInvalidMode(t *testing.T) {
+	t.Setenv("PORT", "8080")
+	t.Setenv("BASIC_AUTH_USERNAME", "alice")
+	t.Setenv("BASIC_AUTH_PASSWORD", "secret")
+	t.Setenv("MODE", "invalid")
+
+	_, err := LoadFromEnv()
+	if err == nil {
+		t.Fatal("expected error for invalid mode")
+	}
+}
+
 func TestLoadFromEnvReadsConfiguredValues(t *testing.T) {
 	t.Setenv("PORT", "9090")
 	t.Setenv("BASIC_AUTH_USERNAME", "bob")

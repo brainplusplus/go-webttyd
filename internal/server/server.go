@@ -23,8 +23,10 @@ func New(cfg config.Config) *Server {
 	profiles := shells.Discover()
 	manager := terminal.NewManager(terminal.NewPTYSpawnFunc())
 	api := httpapi.New(httpapi.Dependencies{
-		Shells:   profiles,
-		Sessions: manager,
+		Shells:        profiles,
+		Sessions:      manager,
+		Mode:          cfg.Mode,
+		WorkspaceRoot: cfg.WorkspaceRoot,
 	})
 
 	return &Server{
@@ -37,7 +39,7 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle("/api/", s.api.Handler())
 	mux.Handle("/ws/", s.api.Handler())
-	mux.Handle("/", spaHandler(distDir()))
+	mux.Handle("/", spaHandler(distDir(), s.Config.Mode))
 
 	return auth.Middleware(s.Config.BasicAuthUsername, s.Config.BasicAuthPassword)(mux)
 }
@@ -58,7 +60,7 @@ func distDir() string {
 	return filepath.Join(cwd, "dist")
 }
 
-func spaHandler(root string) http.Handler {
+func spaHandler(root string, mode string) http.Handler {
 	fileServer := http.FileServer(http.Dir(root))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, err := os.Stat(root); err != nil {
@@ -73,6 +75,14 @@ func spaHandler(root string) http.Handler {
 			return
 		}
 
-		http.ServeFile(w, r, filepath.Join(root, "index.html"))
+		fallback := "index.html"
+		if mode == "full" {
+			idePath := filepath.Join(root, "ide.html")
+			if _, err := os.Stat(idePath); err == nil {
+				fallback = "ide.html"
+			}
+		}
+
+		http.ServeFile(w, r, filepath.Join(root, fallback))
 	})
 }

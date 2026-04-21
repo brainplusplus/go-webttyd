@@ -22,21 +22,27 @@ type SessionManager interface {
 }
 
 type Dependencies struct {
-	Shells   []shells.Profile
-	Sessions SessionManager
+	Shells        []shells.Profile
+	Sessions      SessionManager
+	Mode          string
+	WorkspaceRoot string
 }
 
 type API struct {
-	shells   []shells.Profile
-	sessions SessionManager
-	upgrader websocket.Upgrader
+	shells        []shells.Profile
+	sessions      SessionManager
+	upgrader      websocket.Upgrader
+	mode          string
+	workspaceRoot string
 }
 
 func New(deps Dependencies) *API {
 	return &API{
-		shells:   deps.Shells,
-		sessions: deps.Sessions,
-		upgrader: websocket.Upgrader{CheckOrigin: sameOrigin},
+		shells:        deps.Shells,
+		sessions:      deps.Sessions,
+		upgrader:      websocket.Upgrader{CheckOrigin: sameOrigin},
+		mode:          deps.Mode,
+		workspaceRoot: deps.WorkspaceRoot,
 	}
 }
 
@@ -46,6 +52,17 @@ func (a *API) Handler() http.Handler {
 	mux.HandleFunc("/api/sessions", a.handleSessions)
 	mux.HandleFunc("/api/sessions/", a.handleSessionByID)
 	mux.HandleFunc("/ws/sessions/", a.handleSessionWebSocket)
+	mux.HandleFunc("/api/config", a.handleConfig)
+	mux.HandleFunc("/api/files/tree", a.handleFileTree)
+	mux.HandleFunc("/api/files/content", a.handleFileContent)
+	mux.HandleFunc("/api/files/create", a.handleFileCreate)
+	mux.HandleFunc("/api/files/rename", a.handleFileRename)
+	mux.HandleFunc("/api/files/copy", a.handleFileCopy)
+	mux.HandleFunc("/api/files/move", a.handleFileMove)
+	mux.HandleFunc("/api/files/search", a.handleFileSearch)
+	mux.HandleFunc("/api/files/download", a.handleFileDownload)
+	mux.HandleFunc("/api/files/upload", a.handleFileUpload)
+	mux.HandleFunc("/api/files", a.handleFileDelete)
 	return mux
 }
 
@@ -81,6 +98,7 @@ func (a *API) handleSessions(w http.ResponseWriter, r *http.Request) {
 		Label:   profile.Label,
 		Command: profile.Command,
 		Args:    profile.Args,
+		CWD:     req.CWD,
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -12,6 +12,7 @@ type ShellProfile struct {
 	Label   string   `json:"label"`
 	Command string   `json:"command"`
 	Args    []string `json:"args"`
+	CWD     string   `json:"cwd,omitempty"`
 }
 
 type PtySession interface {

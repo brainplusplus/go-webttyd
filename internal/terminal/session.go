@@ -29,7 +29,11 @@ func NewPTYSpawnFunc() SpawnFunc {
 		}
 
 		cmd := pseudo.Command(profile.Command, profile.Args...)
-		cmd.Dir = currentWorkingDirectory()
+		if profile.CWD != "" {
+			cmd.Dir = profile.CWD
+		} else {
+			cmd.Dir = currentWorkingDirectory()
+		}
 		cmd.Env = os.Environ()
 		if err := cmd.Start(); err != nil {
 			_ = pseudo.Close()

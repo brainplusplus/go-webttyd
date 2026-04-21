@@ -8,5 +8,11 @@ export default defineConfig({
   build: {
     outDir: resolve(__dirname, 'dist'),
     emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        terminal: resolve(__dirname, 'frontend/index.html'),
+        ide: resolve(__dirname, 'frontend/ide.html'),
+      },
+    },
   },
 });
