@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { getConfig, getFileTree } from '../../api';
+import { getConfig, getDrives, getFileTree } from '../../api';
 import { useWorkspaceStore } from '../../stores/workspace';
 import type { DirEntry } from '../../types';
 
@@ -7,36 +7,57 @@ type TreeNode = DirEntry & { children?: TreeNode[]; expanded?: boolean; fullPath
 
 export function ProjectPicker() {
   const addProject = useWorkspaceStore((s) => s.addProject);
+  const [drives, setDrives] = useState<string[]>([]);
   const [rootPath, setRootPath] = useState('');
   const [nodes, setNodes] = useState<TreeNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const loadTree = useCallback(async (path: string) => {
+    setLoading(true);
+    setError(null);
+    setRootPath(path);
+    try {
+      const entries = await getFileTree(path);
+      setNodes(
+        entries
+          .filter((e) => e.type === 'dir')
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((e) => ({ ...e, fullPath: joinPath(path, e.name) })),
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load');
+      setNodes([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     async function init() {
       try {
-        const config = await getConfig();
-        const root = config.workspaceRoot || (navigator.platform.startsWith('Win') ? 'C:\\' : '/');
-        setRootPath(root);
-        const entries = await getFileTree(root);
-        if (!cancelled) {
-          setNodes(
-            entries
-              .filter((e) => e.type === 'dir')
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map((e) => ({ ...e, fullPath: joinPath(root, e.name) })),
-          );
-        }
+        const [config, availableDrives] = await Promise.all([getConfig(), getDrives()]);
+        if (cancelled) return;
+
+        setDrives(availableDrives);
+
+        const root = config.workspaceRoot || availableDrives[0] || '/';
+        await loadTree(root);
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load');
-      } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load');
+          setLoading(false);
+        }
       }
     }
     void init();
     return () => { cancelled = true; };
-  }, []);
+  }, [loadTree]);
+
+  const handleDriveChange = useCallback((drive: string) => {
+    void loadTree(drive);
+  }, [loadTree]);
 
   const toggleExpand = useCallback(async (node: TreeNode, path: number[]) => {
     if (node.expanded) {
@@ -66,8 +87,27 @@ export function ProjectPicker() {
         <header className="picker-header">
           <p className="eyebrow">Web IDE</p>
           <h1>Open Project</h1>
-          <p className="picker-root">Browsing: {rootPath}</p>
         </header>
+
+        {drives.length > 1 && (
+          <div className="drive-picker">
+            <label className="drive-label">Drive</label>
+            <div className="drive-list">
+              {drives.map((drive) => (
+                <button
+                  key={drive}
+                  className={`drive-btn${drive === rootPath ? ' active' : ''}`}
+                  onClick={() => handleDriveChange(drive)}
+                  type="button"
+                >
+                  {drive}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <p className="picker-root">Browsing: {rootPath}</p>
 
         {error && <div className="status-banner error">{error}</div>}
         {loading && <div className="status-banner">Loading directories…</div>}

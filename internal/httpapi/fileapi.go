@@ -43,6 +43,17 @@ func (a *API) handleConfig(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (a *API) handleFileDrives(w http.ResponseWriter, r *http.Request) {
+	if !a.requireFullMode(w) {
+		return
+	}
+	if r.Method != http.MethodGet {
+		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
+	writeJSON(w, http.StatusOK, filesystem.ListDrives())
+}
+
 func (a *API) handleFileTree(w http.ResponseWriter, r *http.Request) {
 	if !a.requireFullMode(w) {
 		return

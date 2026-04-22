@@ -53,6 +53,7 @@ func (a *API) Handler() http.Handler {
 	mux.HandleFunc("/api/sessions/", a.handleSessionByID)
 	mux.HandleFunc("/ws/sessions/", a.handleSessionWebSocket)
 	mux.HandleFunc("/api/config", a.handleConfig)
+	mux.HandleFunc("/api/files/drives", a.handleFileDrives)
 	mux.HandleFunc("/api/files/tree", a.handleFileTree)
 	mux.HandleFunc("/api/files/content", a.handleFileContent)
 	mux.HandleFunc("/api/files/create", a.handleFileCreate)

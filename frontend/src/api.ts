@@ -52,6 +52,11 @@ export async function getConfig(): Promise<AppConfig> {
   return parseResponse<AppConfig>(response);
 }
 
+export async function getDrives(): Promise<string[]> {
+  const response = await fetch('/api/files/drives', { credentials: 'include' });
+  return parseResponse<string[]>(response);
+}
+
 export async function getFileTree(path: string): Promise<DirEntry[]> {
   const response = await fetch(`/api/files/tree?path=${encodeURIComponent(path)}`, { credentials: 'include' });
   return parseResponse<DirEntry[]>(response);

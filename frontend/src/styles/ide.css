@@ -504,6 +504,47 @@ body {
   color: var(--sidebar-fg);
 }
 
+.drive-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.drive-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--activity-fg);
+}
+
+.drive-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.drive-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--activity-bg);
+  color: var(--sidebar-fg);
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.drive-btn:hover {
+  background: var(--sidebar-hover);
+  border-color: #585b70;
+}
+
+.drive-btn.active {
+  background: #45475a;
+  border-color: #f9e2af;
+  color: #f9e2af;
+}
+
 .picker-root {
   margin: 0;
   font-size: 0.82rem;
