@@ -211,14 +211,14 @@ body {
 .tree-row {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   width: 100%;
-  padding: 4px 8px;
+  padding: 5px 10px;
   border: none;
   background: transparent;
   color: var(--sidebar-fg);
   cursor: pointer;
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   text-align: left;
 }
 

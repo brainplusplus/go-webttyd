@@ -76,7 +76,7 @@ export function IDEWorkspace() {
       <Group orientation="horizontal" className="ide-main">
         {sidebarVisible && (
           <>
-            <Panel defaultSize={20} minSize={12} maxSize={40} className="ide-sidebar">
+            <Panel defaultSize={28} minSize={18} maxSize={45} className="ide-sidebar">
               <div className="sidebar-header">
                 <strong>{activeProject?.name ?? 'No project'}</strong>
               </div>
@@ -99,7 +99,7 @@ export function IDEWorkspace() {
             {terminalVisible && (
               <>
                 <Separator className="resize-handle-v" />
-                <Panel defaultSize={30} minSize={10} maxSize={60} className="ide-terminal-area">
+                <Panel defaultSize={38} minSize={15} maxSize={70} className="ide-terminal-area">
                   <TerminalPanel />
                 </Panel>
               </>
