@@ -7,11 +7,14 @@ import (
 	"path/filepath"
 	"strings"
 
+	"log"
+
 	"go-webttyd/internal/auth"
 	"go-webttyd/internal/config"
 	"go-webttyd/internal/httpapi"
 	"go-webttyd/internal/shells"
 	"go-webttyd/internal/terminal"
+	"go-webttyd/internal/watcher"
 )
 
 type Server struct {
@@ -22,11 +25,22 @@ type Server struct {
 func New(cfg config.Config) *Server {
 	profiles := shells.Discover()
 	manager := terminal.NewManager(terminal.NewPTYSpawnFunc())
+
+	var fw *watcher.FileWatcher
+	if cfg.Mode == "full" {
+		var err error
+		fw, err = watcher.New()
+		if err != nil {
+			log.Printf("warning: file watcher unavailable: %v", err)
+		}
+	}
+
 	api := httpapi.New(httpapi.Dependencies{
 		Shells:        profiles,
 		Sessions:      manager,
 		Mode:          cfg.Mode,
 		WorkspaceRoot: cfg.WorkspaceRoot,
+		Watcher:       fw,
 	})
 
 	return &Server{

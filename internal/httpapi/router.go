@@ -11,6 +11,7 @@ import (
 
 	"go-webttyd/internal/shells"
 	"go-webttyd/internal/terminal"
+	"go-webttyd/internal/watcher"
 
 	"github.com/gorilla/websocket"
 )
@@ -26,6 +27,7 @@ type Dependencies struct {
 	Sessions      SessionManager
 	Mode          string
 	WorkspaceRoot string
+	Watcher       *watcher.FileWatcher
 }
 
 type API struct {
@@ -34,6 +36,7 @@ type API struct {
 	upgrader      websocket.Upgrader
 	mode          string
 	workspaceRoot string
+	watcher       *watcher.FileWatcher
 }
 
 func New(deps Dependencies) *API {
@@ -43,6 +46,7 @@ func New(deps Dependencies) *API {
 		upgrader:      websocket.Upgrader{CheckOrigin: sameOrigin},
 		mode:          deps.Mode,
 		workspaceRoot: deps.WorkspaceRoot,
+		watcher:       deps.Watcher,
 	}
 }
 
@@ -64,6 +68,7 @@ func (a *API) Handler() http.Handler {
 	mux.HandleFunc("/api/files/download", a.handleFileDownload)
 	mux.HandleFunc("/api/files/upload", a.handleFileUpload)
 	mux.HandleFunc("/api/files", a.handleFileDelete)
+	mux.HandleFunc("/ws/watch", a.handleFileWatch)
 	return mux
 }
 

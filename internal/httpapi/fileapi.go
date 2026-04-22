@@ -424,3 +424,53 @@ func (a *API) handleFileUpload(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 }
+
+func (a *API) handleFileWatch(w http.ResponseWriter, r *http.Request) {
+	if !a.requireFullMode(w) {
+		return
+	}
+	if a.watcher == nil {
+		http.Error(w, "file watcher not available", http.StatusServiceUnavailable)
+		return
+	}
+
+	root := r.URL.Query().Get("root")
+	if root == "" {
+		http.Error(w, "root parameter is required", http.StatusBadRequest)
+		return
+	}
+
+	validated, ok := a.validatePath(w, root)
+	if !ok {
+		return
+	}
+
+	conn, err := a.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		return
+	}
+	defer conn.Close()
+
+	if err := a.watcher.WatchRecursive(validated); err != nil {
+		_ = conn.WriteJSON(map[string]string{"type": "error", "message": err.Error()})
+		return
+	}
+
+	sub := a.watcher.Subscribe(validated)
+	defer a.watcher.Unsubscribe(sub)
+
+	go func() {
+		for {
+			if _, _, err := conn.ReadMessage(); err != nil {
+				a.watcher.Unsubscribe(sub)
+				return
+			}
+		}
+	}()
+
+	for event := range sub.Ch {
+		if err := conn.WriteJSON(event); err != nil {
+			return
+		}
+	}
+}

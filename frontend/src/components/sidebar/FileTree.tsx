@@ -7,9 +7,10 @@ type TreeNode = DirEntry & { fullPath: string; children?: TreeNode[]; expanded?:
 type FileTreeProps = {
   rootPath: string;
   onFileSelect: (filePath: string, fileName: string) => void;
+  refreshKey?: number;
 };
 
-export function FileTree({ rootPath, onFileSelect }: FileTreeProps) {
+export function FileTree({ rootPath, onFileSelect, refreshKey }: FileTreeProps) {
   const [nodes, setNodes] = useState<TreeNode[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,7 +28,7 @@ export function FileTree({ rootPath, onFileSelect }: FileTreeProps) {
     }
     void load();
     return () => { cancelled = true; };
-  }, [rootPath]);
+  }, [rootPath, refreshKey]);
 
   const handleToggle = useCallback(async (node: TreeNode, path: number[]) => {
     if (node.type === 'file') {

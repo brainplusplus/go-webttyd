@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Group, Panel, Separator } from 'react-resizable-panels';
 
 import { useWorkspaceStore } from '../../stores/workspace';
+import { useFileWatcher } from '../../hooks/useFileWatcher';
 import { ActivityBar } from '../../components/sidebar/ActivityBar';
 import { FileTree } from '../../components/sidebar/FileTree';
 import { SearchPanel } from '../../components/sidebar/SearchPanel';
@@ -36,6 +37,36 @@ export function IDEWorkspace() {
   const toggleTerminal = useWorkspaceStore((s) => s.toggleTerminal);
 
   const activeProject = useMemo(() => projects.find((p) => p.id === activeProjectId) ?? null, [projects, activeProjectId]);
+
+  const [treeRefreshKey, setTreeRefreshKey] = useState(0);
+
+  const updateFileContent = useWorkspaceStore((s) => s.updateFileContent);
+  const markFileSaved = useWorkspaceStore((s) => s.markFileSaved);
+
+  useFileWatcher({
+    root: activeProject?.path ?? null,
+    onFileChange: useCallback((event) => {
+      if (event.type === 'create' || event.type === 'delete' || event.type === 'rename') {
+        setTreeRefreshKey((k) => k + 1);
+      }
+
+      if (event.type === 'modify' && activeProjectId) {
+        const normalizedPath = event.path.replace(/\\/g, '/');
+        const project = useWorkspaceStore.getState().projects.find((p) => p.id === activeProjectId);
+        const openTab = project?.openFiles.find((f) => {
+          const normalizedTabPath = f.path.replace(/\\/g, '/');
+          return normalizedTabPath === normalizedPath || normalizedPath.endsWith(normalizedTabPath);
+        });
+
+        if (openTab && !openTab.modified) {
+          getFileContent(openTab.path).then((fc) => {
+            updateFileContent(activeProjectId, openTab.id, fc.content);
+            markFileSaved(activeProjectId, openTab.id);
+          }).catch(() => {});
+        }
+      }
+    }, [activeProjectId, updateFileContent, markFileSaved]),
+  });
 
   const handleFileSelect = useCallback(async (filePath: string, fileName: string) => {
     if (!activeProjectId) return;
@@ -81,7 +112,7 @@ export function IDEWorkspace() {
                 <strong>{activeProject?.name ?? 'No project'}</strong>
               </div>
               {activePanel === 'explorer' && activeProject && (
-                <FileTree rootPath={activeProject.path} onFileSelect={handleFileSelect} />
+                <FileTree rootPath={activeProject.path} onFileSelect={handleFileSelect} refreshKey={treeRefreshKey} />
               )}
               {activePanel === 'search' && activeProject && (
                 <SearchPanel rootPath={activeProject.path} onResultClick={handleFileSelect} />
