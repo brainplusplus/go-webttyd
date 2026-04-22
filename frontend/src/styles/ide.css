@@ -114,23 +114,31 @@ body {
 }
 
 .resize-handle-h {
-  width: 4px;
+  width: 6px;
+  min-width: 6px;
   background: var(--border-color);
   cursor: col-resize;
+  transition: background 0.15s;
 }
 
-.resize-handle-h:hover {
-  background: #585b70;
+.resize-handle-h:hover,
+.resize-handle-h[data-separator="hover"],
+.resize-handle-h[data-separator="active"] {
+  background: #89b4fa;
 }
 
 .resize-handle-v {
-  height: 4px;
+  height: 6px;
+  min-height: 6px;
   background: var(--border-color);
   cursor: row-resize;
+  transition: background 0.15s;
 }
 
-.resize-handle-v:hover {
-  background: #585b70;
+.resize-handle-v:hover,
+.resize-handle-v[data-separator="hover"],
+.resize-handle-v[data-separator="active"] {
+  background: #89b4fa;
 }
 
 .editor-area {

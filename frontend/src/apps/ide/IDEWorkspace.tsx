@@ -76,7 +76,7 @@ export function IDEWorkspace() {
       <Group orientation="horizontal" className="ide-main">
         {sidebarVisible && (
           <>
-            <Panel defaultSize={28} minSize={18} maxSize={45} className="ide-sidebar">
+            <Panel defaultSize="28%" minSize="15%" maxSize="50%" className="ide-sidebar">
               <div className="sidebar-header">
                 <strong>{activeProject?.name ?? 'No project'}</strong>
               </div>
@@ -88,18 +88,18 @@ export function IDEWorkspace() {
               )}
               {activePanel === 'projects' && <ProjectList />}
             </Panel>
-            <Separator className="resize-handle-h" />
+            <Separator className="resize-handle-h" style={{ cursor: 'col-resize' }} />
           </>
         )}
-        <Panel minSize={30} className="ide-content">
-          <Group orientation="vertical">
-            <Panel minSize={20} className="ide-editor-area">
+        <Panel minSize="20%" className="ide-content">
+          <Group orientation="vertical" style={{ height: '100%' }}>
+            <Panel minSize="15%" className="ide-editor-area">
               <EditorArea />
             </Panel>
             {terminalVisible && (
               <>
-                <Separator className="resize-handle-v" />
-                <Panel defaultSize={38} minSize={15} maxSize={70} className="ide-terminal-area">
+                <Separator className="resize-handle-v" style={{ cursor: 'row-resize' }} />
+                <Panel defaultSize="38%" minSize="10%" maxSize="70%" className="ide-terminal-area">
                   <TerminalPanel />
                 </Panel>
               </>
