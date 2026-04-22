@@ -5,11 +5,15 @@ export function ProjectList() {
   const activeProjectId = useWorkspaceStore((s) => s.activeProjectId);
   const setActiveProject = useWorkspaceStore((s) => s.setActiveProject);
   const removeProject = useWorkspaceStore((s) => s.removeProject);
+  const setShowPicker = useWorkspaceStore((s) => s.setShowPicker);
 
   return (
     <div className="project-list">
       <div className="project-list-header">
         <strong>Open Projects</strong>
+        <button className="project-open-folder-btn" onClick={() => setShowPicker(true)} type="button">
+          + Open Folder
+        </button>
       </div>
       {projects.map((p) => (
         <div key={p.id} className={`project-item${p.id === activeProjectId ? ' active' : ''}`}>

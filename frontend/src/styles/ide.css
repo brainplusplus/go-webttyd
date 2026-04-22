@@ -335,9 +335,26 @@ body {
 }
 
 .project-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 8px 12px;
   font-size: 0.8rem;
   color: var(--activity-fg);
+}
+
+.project-open-folder-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--sidebar-hover);
+  color: var(--sidebar-fg);
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.project-open-folder-btn:hover {
+  background: #585b70;
 }
 
 .project-item {
@@ -551,6 +568,64 @@ body {
   background: #45475a;
   border-color: #f9e2af;
   color: #f9e2af;
+}
+
+.picker-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.picker-section-title {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--activity-fg);
+}
+
+.picker-projects {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.picker-project-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--activity-bg);
+  color: var(--sidebar-fg);
+  cursor: pointer;
+  text-align: left;
+}
+
+.picker-project-btn:hover {
+  background: var(--sidebar-hover);
+  border-color: #585b70;
+}
+
+.picker-project-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.picker-project-path {
+  font-size: 0.75rem;
+  color: var(--activity-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picker-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 4px 0;
 }
 
 .picker-root {

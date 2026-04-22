@@ -7,6 +7,10 @@ type TreeNode = DirEntry & { children?: TreeNode[]; expanded?: boolean; fullPath
 
 export function ProjectPicker() {
   const addProject = useWorkspaceStore((s) => s.addProject);
+  const projects = useWorkspaceStore((s) => s.projects);
+  const setActiveProject = useWorkspaceStore((s) => s.setActiveProject);
+  const setShowPicker = useWorkspaceStore((s) => s.setShowPicker);
+
   const [drives, setDrives] = useState<string[]>([]);
   const [rootPath, setRootPath] = useState('');
   const [nodes, setNodes] = useState<TreeNode[]>([]);
@@ -81,6 +85,11 @@ export function ProjectPicker() {
     addProject(node.fullPath, node.name);
   }, [addProject]);
 
+  const handleSelectExisting = useCallback((projectId: string) => {
+    setActiveProject(projectId);
+    setShowPicker(false);
+  }, [setActiveProject, setShowPicker]);
+
   return (
     <main className="picker-shell">
       <div className="picker-card">
@@ -88,6 +97,28 @@ export function ProjectPicker() {
           <p className="eyebrow">Web IDE</p>
           <h1>Open Project</h1>
         </header>
+
+        {projects.length > 0 && (
+          <div className="picker-section">
+            <h3 className="picker-section-title">Opened Projects</h3>
+            <div className="picker-projects">
+              {projects.map((p) => (
+                <button
+                  key={p.id}
+                  className="picker-project-btn"
+                  onClick={() => handleSelectExisting(p.id)}
+                  type="button"
+                >
+                  <span className="picker-project-name">{p.name}</span>
+                  <span className="picker-project-path">{p.path}</span>
+                </button>
+              ))}
+            </div>
+            <div className="picker-divider" />
+          </div>
+        )}
+
+        <h3 className="picker-section-title">Open New Folder</h3>
 
         {drives.length > 1 && (
           <div className="drive-picker">
